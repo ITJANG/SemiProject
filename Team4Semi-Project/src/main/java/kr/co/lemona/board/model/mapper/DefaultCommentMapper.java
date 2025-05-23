@@ -52,7 +52,7 @@ public interface DefaultCommentMapper {
 	 */
 	int checkLike(int commentNo, int memberNo);
 
-	/** 좋아요 빼기
+	/** 좋아요 취소
 	 * @param commentNo
 	 * @param memberNo
 	 * @author 민장
