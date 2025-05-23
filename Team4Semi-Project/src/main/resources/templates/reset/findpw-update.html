@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LEMONA - 비밀번호 재설정</title>
+  <link rel="stylesheet" href="/css/findpw-update.css"/>
+  <script defer src="/js/findpw-update.js"></script>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="header">
+      <div class="logo-container">
+        <a href="/" class="logo-link">
+          <img src="/images/lemona-logo.png" alt="LEMONA 로고" class="logo"/>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <div class="find-box">
+        <h2>비밀번호 재설정</h2>
+		<form id="resetPwForm" method="POST" action="/member/updatePw">
+		  <input type="hidden" name="memberId" value="{{memberId}}" />
+
+		  <input type="password" id="newPassword" name="newPw" placeholder="새 비밀번호" required />
+		  <input type="password" id="confirmPassword" name="confirmPw" placeholder="비밀번호 확인" required />
+
+		  <div id="pwError" style="color: red; margin-top: 10px;"></div>
+
+		  <div class="bottom-buttons">
+		    <button type="submit">비밀번호 변경</button>
+		    <a href="/login">로그인 화면</a>
+		  </div>
+		</form>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="#">프로젝트 소개</a>
+        <a href="#">개발자 소개</a>
+        <a href="#">개인정보 처리방침</a>
+        <a href="#">이용약관</a>
+        <span>© Copyright</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
