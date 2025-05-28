@@ -198,6 +198,7 @@ const showInsertComment = (parentCommentNo, btn) => {
   // 답글을 작성할 textarea 요소 생성
   const textarea = document.createElement("textarea");
   textarea.classList.add("commentInsertContent");
+  textarea.placeholder = "답글을 입력하세요";
   // 답글 버튼의 부모의 뒤쪽에 textarea 추가
   // after(요소) : 뒤쪽에 추가
   btn.parentElement.after(textarea);
@@ -413,22 +414,61 @@ const updateComment = (commentNo, btn) => {
     })
 
 }
+/* 좋아요 기능 */
+const commentLikes = document.querySelectorAll(".commentLikes");
+if (commentLikes) {
+  commentLikes.forEach((likesBtn) => {
+    likesBtn.addEventListener("click", function (e) {
+      const loginMemberNo = this.dataset.loginMemberNo;
+      const commentNo = this.dataset.commentNo;
+      let likeCK = Number(this.dataset.likeCheck);
 
-document.querySelectorAll(".comment-like-btn").forEach(btn => {
-  btn.addEventListener("click", e => {
-    const commentNo = e.target.dataset.commentNo;
-    fetch("/defaultComments/like", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "commentNo=" + commentNo
-    })
-      .then(resp => resp.text())
-      .then(result => {
-        if (result == 1) {
-          e.target.classList.add("liked");
-        } else {
-          e.target.classList.remove("liked");
-        }
-      });
+      console.log(loginMemberNo, commentNo, likeCK, `${boardCode}`);
+
+      if (!loginMemberNo || loginMemberNo === "null") {
+        alert("로그인 후 이용해주세요");
+        return;
+      }
+
+      const obj = {
+        memberNo: loginMemberNo,
+        commentNo: commentNo,
+        likeCheck: likeCK
+      };
+
+      fetch(`${fetchUrl}/like`, {
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(obj)
+      })
+        .then(resp => resp.text())
+        .then(count => {
+
+          if (count == -1) {
+            console.log("좋아요 처리 실패");
+            return;
+          }
+
+          // 상태 토글 및 반영
+          likeCK = likeCK === 0 ? 1 : 0;
+          this.dataset.likeCheck = likeCK;
+
+          // 아이콘 클래스 토글
+          const icon = this.querySelector("i");
+          if (icon) {
+            icon.classList.toggle("fa-regular");
+            icon.classList.toggle("fa-solid");
+          }
+
+          // 좋아요 수 변경
+          const countSpan = this.querySelector("span");
+          if (countSpan) {
+            countSpan.innerText = count;
+          }
+        })
+        .catch(err => {
+          console.error("좋아요 처리 중 오류:", err);
+        });
+    });
   });
-});
+};

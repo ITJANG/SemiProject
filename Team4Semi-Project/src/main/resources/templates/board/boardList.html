@@ -22,7 +22,9 @@
     <section class="recipe-section">
       <!-- 섹션 헤더 -->
       <div class="section-header">
-        <h2 class="section-title">게시글 목록</h2>
+        
+        <h2 th:if="${board.boardCode == 2}" class="section-title">자유 게시판</h2>
+        <h2 th:if="${board.boardCode == 3}" class="section-title">공지 게시판</h2>
 
         <div class="options-container">
           <div class="view-options">
@@ -35,13 +37,6 @@
               <span class="material-symbols-outlined"> view_cozy </span>
             </button>
           </div>
-
-          <button class="view-toggle agenda" data-view="agenda">
-            <span class="material-symbols-outlined"> view_agenda </span>
-          </button>
-          <button class="view-toggle cozy active" data-view="cozy">
-            <span class="material-symbols-outlined"> view_cozy </span>
-          </button>
         </div>
 
         <div class="sort-options">
@@ -55,6 +50,7 @@
         </div>
       </div>
       </div>
+      </div>
       <!-- 게시글 컨테이너 (Cozy View) -->
       <div class="recipe-container cozy-view" id="cozy">
         <!-- 게시글 없을 때 -->
@@ -66,13 +62,11 @@
         <div th:unless="${#lists.isEmpty(boardList)}" class="recipe-grid">
           <div th:each="board : ${boardList}" class="recipe-item">
             <div class="recipe-image">
-              <!-- <img th:src="${board.thumbnail}" alt="레시피 이미지"> -->
               <a
                 th:href="@{/board/{boardCode}/{boardNo}(boardCode=${board.boardCode}, boardNo=${board.boardNo}, cp=${pagination.currentPage})}">
-                <!-- 레시피 게시판 썸네일 -->
-                <img onerror="this.onerror=null; this.src='/images/lemona-logo.png';"
-                  th:src="${#strings.isEmpty(board.thumbnailImgRename) ? '/images/lemona-logo.png' : board.thumbnailImgPath + board.thumbnailImgRename}"
-                  alt="레시피 이미지" />
+                <!-- 자유 또는 공지 게시판 썸네일 -->
+                <img th:src="${#strings.isEmpty(board.thumbnail) ? '/images/lemona-logo.png' : board.thumbnail}"
+                  alt="게시판 이미지">
               </a>
             </div>
 
@@ -101,7 +95,7 @@
                   <span th:text="${board.likeCount}">28</span>
                 </button>
                 <div class="views">
-                  <i class="fas fa-eye"></i>
+                  <i class="material-symbols-outlined align-middle">visibility</i>
                   <span th:text="${board.readCount}">36</span>
                 </div>
               </div>
@@ -141,10 +135,17 @@
                 <span class="recipe-author" th:utext="${board.memberNickname}">김아가 님</span>
               </div>
               <div class="recipe-stats">
-                <span class="likes"><i class="fas fa-heart"></i>
-                  <span th:text="${board.likeCount}">28</span></span>
-                <span class="views"><i class="fas fa-eye"></i>
-                  <span th:text="${board.readCount}">36</span></span>
+                <button type="button" class="likes" th:data-login-member-no="${session.loginMember?.memberNo}"
+                  th:data-board-code="${board.boardCode}" th:data-board-no="${board.boardNo}"
+                  th:data-like-check="${board.likeCheck}"
+                  th:classappend="${board.likeCheck == 1} ? likeChecked : likeUnChecked">
+                  <i class="fa-lemon" th:classappend="${board.likeCheck == 1} ? fa-solid : fa-regular"></i>
+                  <span th:text="${board.likeCount}">28</span>
+                </button>
+                <div class="views">
+                  <i class="fas fa-eye"></i>
+                  <span th:text="${board.readCount}">36</span>
+                </div>
               </div>
             </div>
           </div>
@@ -197,13 +198,13 @@
           <!-- 첫 페이지로 이동 -->
           <li>
             <a
-              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=1, key=${param.key}, query=${param.query})}">&lt;&lt;</a>
+              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=1, key=${param.key}, queryb=${param.queryb})}">&lt;&lt;</a>
           </li>
 
           <!-- 이전 목록 마지막 번호로 이동 -->
           <li>
             <a
-              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=*{prevPage}, key=${param.key}, query=${param.query})}">&lt;</a>
+              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=*{prevPage}, key=${param.key}, queryb=${param.queryb})}">&lt;</a>
           </li>
 
           <!-- 특정 페이지로 이동 -->
@@ -215,7 +216,7 @@
 
             <!-- 보고있지 않은 페이지 -->
             <li th:unless="${i} == *{currentPage}">
-              <a th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=${i}, key=${param.key}, query=${param.query})}"
+              <a th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=${i}, key=${param.key}, queryb=${param.queryb})}"
                 th:text="${i}">이동할 페이지</a>
             </li>
           </th:block>
@@ -230,13 +231,13 @@
           <!-- 다음 목록 시작 번호로 이동 -->
           <li>
             <a
-              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=*{nextPage}, key=${param.key}, query=${param.query})}">&gt;</a>
+              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=*{nextPage}, key=${param.key}, queryb=${param.queryb})}">&gt;</a>
           </li>
 
           <!-- 끝 페이지로 이동 -->
           <li>
             <a
-              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=*{maxPage}, key=${param.key}, query=${param.query})}">&gt;&gt;</a>
+              th:href="@{/board/{boardCode}(boardCode=${boardCode}, cp=*{maxPage}, key=${param.key}, queryb=${param.queryb})}">&gt;&gt;</a>
           </li>
         </ul>
       </div>
@@ -250,8 +251,7 @@
             <option value="t" th:selected="${key == 't'}">제목</option>
             <option value="c" th:selected="${key == 'c'}">내용</option>
             <option value="tc" th:selected="${key == 'tc'}">제목+내용</option>
-            <option value="w" th:selected="${key == 'w'}">작성자</option>
-            <option value="h" th:selected="${key == 'h'}">해시태그</option>
+            <option value="w" th:selected="${key == 'w'}">작성자</option>z
           </select>
 
           <div class="select-box1">
@@ -269,6 +269,7 @@
           </svg>
         </button>
       </form>
+
     </section>
   </main>
 
@@ -315,10 +316,10 @@
 
         });
       }
+
     });
   </script>
   <th:block th:replace="~{common/header :: search-header-js}"></th:block>
-  <script th:src="@{/js/board/boardList.js}"></script>
   <script layout:fragment="script"></script>
 </body>
 

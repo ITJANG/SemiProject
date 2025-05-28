@@ -34,8 +34,12 @@ public class DefaultCommentController {
 	 * @author 민장
 	 */
 	@GetMapping("")
-	public Map<String, Object> select(@RequestParam("boardNo") int boardNo) {
-	    List<DefaultComment> commentList = service.select(boardNo);
+	public Map<String, Object> select(@RequestParam("boardNo") int boardNo,
+			 @SessionAttribute(value = "loginMember", required = false) Member loginMember) {
+		
+		int memberNo = loginMember != null ? loginMember.getMemberNo() : 0;
+		
+	    List<DefaultComment> commentList = service.select(boardNo, memberNo);
 	    int commentCount = service.count(boardNo);
 
 	    Map<String, Object> map = new HashMap<>();
@@ -82,8 +86,12 @@ public class DefaultCommentController {
 	 * @return
 	 */
 	@PostMapping("like")
-	public int like(@RequestParam int commentNo, 
-			@SessionAttribute("loginMember") Member loginMember) {
-		return service.like(commentNo, loginMember.getMemberNo());
+	public int like(@RequestBody Map<String, Object> map, 
+			@SessionAttribute(value = "loginMember", required = false) Member loginMember) {
+		
+		int commentNo = Integer.parseInt(map.get("commentNo").toString());
+	    int memberNo = loginMember.getMemberNo();
+	    
+		return service.like(commentNo, memberNo);
 	}
 }

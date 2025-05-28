@@ -71,3 +71,7 @@
   line-height: var(--ryu-h-2-line-height);
   letter-spacing: var(--ryu-h-2-letter-spacing);
 }
+.text-muted {
+  font-size: 0.9em;
+  color: #888;
+}

@@ -1,6 +1,7 @@
 package kr.co.lemona.board.model.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
@@ -44,25 +45,32 @@ public interface DefaultCommentMapper {
 	 */
 	int update(DefaultComment comment);
 
-	/** 좋아요 했는지 체크
+	/** 좋아요 여부 확인
 	 * @param commentNo
 	 * @param memberNo
 	 * @return
 	 * @author 민장
 	 */
-	int checkLike(int commentNo, int memberNo);
+	int checkLike(Map<String, Object> map);
 
+	/** 좋아요 추가
+	 * @param commentNo
+	 * @param memberNo
+	 * @author 민장
+	 */
+	int insertLike(Map<String, Object> map);
+	
 	/** 좋아요 취소
 	 * @param commentNo
 	 * @param memberNo
 	 * @author 민장
+	 * @return 
 	 */
-	void deleteLike(int commentNo, int memberNo);
+	int deleteLike(Map<String, Object> map);
 
-	/** 좋아요 하기
+	/** 좋아요 개수 조회
 	 * @param commentNo
-	 * @param memberNo
-	 * @author 민장
+	 * @return
 	 */
-	void insertLike(int commentNo, int memberNo);
+	int countLike(int commentNo);
 }

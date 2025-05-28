@@ -52,17 +52,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
     newStep.innerHTML = `
             <div class="step-buttons">
-                <button type="button" class="step-btn step-up" title="위로 이동"><span>↑</span></button>
-                <button type="button" class="step-btn step-delete" title="삭제"><span>×</span></button>
-                <button type="button" class="step-btn step-down" title="아래로 이동"><span>↓</span></button>
+                <button type="button" class="step-btn step-up" title="위로 이동">
+                  <span class="material-symbols-outlined">
+                    keyboard_arrow_up
+                  </span>
+                </button>
+                <button type="button" class="step-btn step-delete" title="삭제">
+                  <span class="material-symbols-outlined">
+                    close
+                  </span>
+                </button>
+                <button type="button" class="step-btn step-down" title="아래로 이동">
+                  <span class="material-symbols-outlined">
+                    keyboard_arrow_down
+                  </span>
+                </button>
             </div>
             <div class="step-content">
-                <textarea name="recipeStep" placeholder="요리 과정을 입력하세요..."></textarea>
+                <textarea name="recipeStep" placeholder="요리 과정을 알려주세요, 셰프!"></textarea>
                 <div class="step-image-area">
                     <div class="image-upload">
                         <label for="stepImage${stepCounter}">
-                            <div class="upload-icon">+</div>
-                            <span>사진 추가</span>
+                          <span class="material-symbols-outlined">
+                            image
+                          </span>
                         </label>
                         <input type="file" id="stepImage${stepCounter}" class="step-image-input" accept="image/*">
                     </div>
@@ -89,11 +102,26 @@ document.addEventListener("DOMContentLoaded", function () {
    * 요리과정 스텝 이벤트 바인딩
    */
   function bindStepEvents() {
-    // 이미지 업로드 이벤트
+    // 이미지 업로드 이벤트 
     document.querySelectorAll(".step-image-input").forEach((input) => {
       if (!input.hasListener) {
         input.addEventListener("change", handleImageUpload);
         input.hasListener = true;
+      }
+    });
+
+    // 이미지 변경 이벤트
+    document.querySelectorAll(".image-preview").forEach((previewDiv) => {
+      if (!previewDiv.hasListener) {
+        previewDiv.addEventListener("click", function (e) {
+          const img = e.target;
+          if (img.tagName !== "IMG") return;
+
+          const stepDiv = previewDiv.closest(".step-image-area");
+          const fileInput = stepDiv.querySelector(".step-image-input");
+          if (fileInput) fileInput.click();
+        });
+        previewDiv.hasListener = true;
       }
     });
 
@@ -162,36 +190,76 @@ document.addEventListener("DOMContentLoaded", function () {
    */
   function handleImageUpload(e) {
     const file = e.target.files[0];
-    if (!file) return;
+    const maxSize = 1024 * 1024 * 10; // 10MB
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
 
-    const stepElement = this.closest(".recipe-step");
+    const input = e.target;
+    const stepElement = input.closest(".recipe-step");
     const imageUpload = stepElement.querySelector(".image-upload");
-    const previewContainer = stepElement.querySelector(
-      ".image-preview-container"
-    );
+    const previewContainer = stepElement.querySelector(".image-preview-container");
     const preview = stepElement.querySelector(".image-preview");
+
+    // 기존 이미지 태그
+    const prevImg = preview.querySelector("img");
+    // 기존 이미지 src 기억
+    const previousImageSrc = prevImg?.getAttribute("src");
+
+    // 사용자가 파일 선택을 취소했을 때
+    if (!file) {
+      // 기존 이미지 복원
+      if (previousImageSrc) {
+        preview.innerHTML = `<img src="${previousImageSrc}" alt="레시피 이미지">`;
+        imageUpload.style.display = "none";
+        previewContainer.style.display = "flex";
+      }
+      return;
+    }
+
+    // 업로드 파일 조건 검사 (예: 확장자, 용량 제한 등)
+    if (!allowedTypes.includes(file.type)) {
+      alert("JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
+      // 기존 이미지 복원
+      if (previousImageSrc) {
+        preview.innerHTML = `<img src="${previousImageSrc}" alt="레시피 이미지">`;
+        imageUpload.style.display = "none";
+        previewContainer.style.display = "flex";
+      }
+      return;
+    }
+
+    // 용량 제한 조건 적용
+    if (file.size > maxSize) {
+      alert("10MB 이하의 이미지만 업로드 가능합니다.");
+      // 기존 이미지 복원
+      if (previousImageSrc) {
+        preview.innerHTML = `<img src="${previousImageSrc}" alt="레시피 이미지">`;
+        imageUpload.style.display = "none";
+        previewContainer.style.display = "flex";
+      }
+      return;
+    }
 
     // 미리보기 생성
     const reader = new FileReader();
     reader.onload = function (e) {
       preview.innerHTML = `<img src="${e.target.result}" alt="레시피 이미지">`;
       imageUpload.style.display = "none";
-      previewContainer.style.display = "block";
-    };
+      previewContainer.style.display = "flex";
 
-    // 업도드된 이미지가 마지막 사진일때 썸내일로 사용
-    const steps = document.querySelectorAll(".recipe-step");
-    const isLastStep = stepElement === steps[steps.length - 1];
-
-    if (isLastStep) {
-      const thumbnailRadio = stepElement.querySelector('input[type="radio"]');
-      if (thumbnailRadio) {
-        thumbnailRadio.checked = true;
+      // 업로드된 이미지가 마지막 사진일 때 썸네일로 사용
+      const steps = document.querySelectorAll(".recipe-step");
+      const isLastStep = stepElement === steps[steps.length - 1];
+      if (isLastStep) {
+        const thumbnailRadio = stepElement.querySelector('input[type="radio"]');
+        if (thumbnailRadio) {
+          thumbnailRadio.checked = true;
+        }
       }
-    }
+    };
 
     reader.readAsDataURL(file);
   }
+
 
   /**
    * 스텝 순서 위로 이동
@@ -314,6 +382,14 @@ document.addEventListener("DOMContentLoaded", function () {
       cleanTag = cleanTag.substring(1);
     }
 
+    // 해시태그 정규식 검사
+    const tagPattern = /^[a-zA-Z가-힣0-9]+$/;
+    if (!tagPattern.test(cleanTag)) {
+      alert("해시태그에는 특수문자나 공백을 사용할 수 없습니다.");
+      hashTagInput.value = "";
+      return;
+    }
+
     // 중복 체크
     if (hashTags.includes(cleanTag)) {
       hashTagInput.value = "";
@@ -328,7 +404,9 @@ document.addEventListener("DOMContentLoaded", function () {
     tagElement.className = "hashtag";
     tagElement.innerHTML = `
             <span>#${cleanTag}</span>
-            <span class="delete-hashtag">×</span>
+            <span class="delete-hashtag material-symbols-outlined">
+              close
+            </span>
         `;
 
     // 삭제 버튼 이벤트
@@ -370,39 +448,52 @@ document.addEventListener("DOMContentLoaded", function () {
     formData.append("boardTitle", boardTitle);
 
     // 대표 이미지 선택 여부
-    let thumbnailSelected = false;
-    // 요리과정 수집
+    let isThumbnailSelected = false;
+
+    // 스텝 정보 수집
     const steps = document.querySelectorAll(".recipe-step");
-    steps.forEach((step, index) => {
+    for (let index = 0; index < steps.length; index++) {
+      const step = steps[index];
+
+      // 스텝 설명 수집
       const stepContent = step.querySelector("textarea").value;
-      if (!stepContent) { // 설명이 비어있는 단계가 있다면
+      // 작성되지 않은 스텝 설명이 있을때
+      if (!stepContent.trim()) {
         alert("작성되지 않은 레시피 과정이 있어요!");
         step.querySelector("textarea").focus();
-        e.preventDefault(); // 제출 취소
+        e.preventDefault();
         return;
       }
+      // 작성되지 않은 스텝 설명이 없을때, 스텝 설명을 수집
       formData.append("stepContents", stepContent);
 
-      // 이미지 수집
+      // 스텝 이미지 수집
       const imageInput = step.querySelector(".step-image-input");
+      // 이미지가 있을때
       if (imageInput.files.length > 0) {
         formData.append("images", imageInput.files[0]);
-      } else { // 이미지가 없다면
-        formData.append("images", new File([""], ""));
+        formData.append("imageExists", true);
+      } else { // 이미지가 없을때
+        // 공백 표시
+        formData.append("imageExists", false);
       }
 
-      // 썸네일 설정 확인
-      const isThumbnail = step.querySelector('input[type="radio"]').checked;
-      if (isThumbnail) {
+      // 썸내일 정보 수집
+      const thumbnailRadio = step.querySelector('input[type="radio"]');
+      // 썸내일 체크박스가 있고, 체크 요소도 있을때
+      if (thumbnailRadio && thumbnailRadio.checked) {
+        // 썸내일 정보 수집
         formData.append("thumbnailNo", index + 1);
-        thumbnailSelected = true;
+        isThumbnailSelected = true;
       }
-    });
+    }
 
-    // 대표 이미지가 선택되지 않았다면
-    if (!thumbnailSelected) {
+    // 이미지는 있는데 썸내일이 없다면
+    const hasAnyImage = Array.from(steps).some(step => step.querySelector(".step-image-input").files.length > 0);
+
+    if (hasAnyImage && !isThumbnailSelected) {
       alert("대표 이미지를 선택해주세요!");
-      e.preventDefault(); // 제출 취소
+      e.preventDefault();
       return;
     }
 
@@ -415,23 +506,38 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 레시피 제출
     // 제출할 데이터를 formData에 업로드
-    formData.forEach((key, value) => {
+    formData.forEach((value, key) => {
       console.log(key, value);
     });
 
     fetch("/board/1/insert", {
       method: "POST",
+      // ✅ AJAX 요청임을 명시!
+      headers: { "X-Requested-With": "XMLHttpRequest" },
       body: formData,
     })
-      .then((response) => {
+      .then(async (response) => {
         if (!response.ok) {
-          throw new Error("서버 응답 실패");
+          // 상태 코드에 따라 다르게 처리
+          switch (response.status) {
+            case 404:
+              alert("404 ERROR: 페이지를 찾을 수 없습니다.");
+              break;
+            case 500:
+              alert("500 ERROR: 서버 내부 오류입니다.");
+              break;
+            default:
+              alert(`${response.status} ERROR`);
+          }
+
+          throw new Error(`HTTP 오류: ${response.status}`);
         }
-        return response.text(); // 리턴값은 작성된 게시글 페이지 링크
+
+        // 정상 응답일 경우
+        return response.text();
       })
       .then((result) => {
         console.log("응답 성공:", result);
-        // 예: "/board/1/0/123" 같은 경로를 서버가 돌려줬다고 가정
         alert("레시피를 등록했습니다!");
         location.href = result;
       })

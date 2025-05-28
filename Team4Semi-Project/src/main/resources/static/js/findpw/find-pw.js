@@ -1,29 +1,52 @@
-document.getElementById('findPwForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+document.addEventListener("DOMContentLoaded", () => {
+  const findPwForm = document.getElementById("findPwForm");
+  const userIdInput = document.getElementById("userId");
+  const userNameInput = document.getElementById("userName");
+  const userEmailInput = document.getElementById("userEmail");
+  const findPwBtn = document.querySelector(".find-pw-btn");
 
-  const form = e.target;
-  const data = {
-    userId: form.userId.value.trim(),
-    userName: form.userName.value.trim(),
-    userEmail: form.userEmail.value.trim(),
-  };
+  findPwBtn.addEventListener("click", async (e) => {
+    const memberId = userIdInput.value.trim();
+    const memberName = userNameInput.value.trim();
+    const memberEmail = userEmailInput.value.trim();
 
-  try {
-    const response = await fetch(form.action, {
-      method: form.method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-
-    if (result.success) {
-      window.location.href = result.redirectUrl;
-    } else {
-      alert(result.message);
+    // 1️⃣ 입력 유효성 검사
+    if (!memberId) {
+      alert("아이디를 입력해주세요.");
+      userIdInput.focus();
+      return;
     }
-  } catch (error) {
-    alert('서버 통신 중 오류가 발생했습니다.');
-  }
+
+    if (!memberName) {
+      alert("이름을 입력해주세요.");
+      userNameInput.focus();
+      return;
+    }
+
+    if (!memberEmail) {
+      alert("이메일을 입력해주세요.");
+      userEmailInput.focus();
+      return;
+    }
+
+    // 2️⃣ 서버에 POST 요청 보내기
+
+    const response = await fetch("/find/findPw", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ memberId, memberName, memberEmail }),
+    });
+
+    const data = await response.json();
+    console.log("응답 내용:", data);
+
+    if (data.sucess) {
+      // 비밀번호 재설정 페이지로 이동
+      window.location.href = "/find/findpw-update";
+    } else {
+      alert(data.message || "입력한 값이 일치하지 않습니다.");
+    }
+  });
 });

@@ -1,9 +1,11 @@
 package kr.co.lemona.member.model.service;
 
+import java.util.Map;
+
 import kr.co.lemona.member.model.dto.Member;
 
 public interface MemberService {
-
+	
 	/**
 	 * 로그인 서비스
 	 * @param inputMember
@@ -32,5 +34,24 @@ public interface MemberService {
 	 * @return
 	 */
 	int register(Member inputMember);
+
+	/** 아이디 찾기
+	 * @param params
+	 * @return
+	 */
+	String findIdByNameAndEmail(Map<String, String> params);
+
+	/** 비밀번호 찾기
+	 * @param member
+	 * @return
+	 */
+	Map<String, String> findUserByIdNameEmail(Member member);
+	
+	/** 비밀번호 재설정
+	 * @param memberId
+	 * @param newPassword
+	 * @return
+	 */
+	 boolean updatePassword(String memberId, String newPassword);
 
 }

@@ -1,9 +1,14 @@
 package kr.co.lemona.member.model.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import kr.co.lemona.member.model.dto.Member;
 import kr.co.lemona.member.model.mapper.MemberMapper;
@@ -29,15 +34,15 @@ public class MemberServiceImpl implements MemberService {
 		// 암호화 진행
 
 		// bcrypt.encode(문자열) : 문자열을 암호화하여 반환
-		// String bcryptPassword = bcrypt.encode(inputMember.getMemberPw());
-		// log.debug("bcryptPassword : " + bcryptPassword);
+		String bcryptPassword = bcrypt.encode(inputMember.getMemberPw());
+		log.debug("bcryptPassword : " + bcryptPassword);
 
 		// bcrypt.matches(평문, 암호화): 평문과 암호화가 일치하면 true, 아니면 false 반환
 
-		// 1. 이메일이 일치하면서 탈퇴하지 않은 회원 조회
-		Member loginMember = mapper.login(inputMember.getMemberEmail());
+		// 1. 아이디가 일치하면서 탈퇴하지 않은 회원 조회
+		Member loginMember = mapper.login(inputMember.getMemberId());
 
-		// 2. 만약에 일치하는 이메일이 없어서 조회 결과가 null 인 경우
+		// 2. 만약에 일치하는 아이디 없어서 조회 결과가 null 인 경우
 		if (loginMember == null)
 			return null;
 
@@ -45,7 +50,11 @@ public class MemberServiceImpl implements MemberService {
 		// 암호화된 비밀번호(loginMember.getMemberPw())
 		// 두 비밀번호가 일치하는지 확인 (bcrypt.matches(평문, 암호화))
 		// 일치하지 않으면
+		log.debug("loginMember : {} ",loginMember);
+
 		if (!bcrypt.matches(inputMember.getMemberPw(), loginMember.getMemberPw())) {
+			log.debug("????");
+				
 			return null;
 		}
 
@@ -86,6 +95,32 @@ public class MemberServiceImpl implements MemberService {
 	@Override
 	public int checkId(String memberId) {
 		return 0;
+	}
+
+	// 아이디 찾기 
+	@Override
+	public String findIdByNameAndEmail(Map<String, String> params) {
+		log.debug("입력 name: " + params.get("name"));
+	    log.debug("입력 email: " + params.get("email"));
+
+	    String result = mapper.findIdByNameAndEmail(params);
+
+	    log.debug("찾은 ID: " + result);
+
+	    return result;
+	}
+	
+	// 비밀번호 찾기
+	@Override
+	public Map<String, String> findUserByIdNameEmail(Member member) {
+	    return mapper.findUserByIdNameEmail(member);
+	}
+		
+	// 비밀번호 재설정
+	@Override
+	public boolean updatePassword(String memberId, String newPassword) {
+		 String encPw = bcrypt.encode(newPassword);  // 암호화
+	    return mapper.updatePassword(memberId, newPassword);
 	}
 
 }

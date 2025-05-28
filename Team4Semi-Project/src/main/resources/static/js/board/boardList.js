@@ -19,18 +19,22 @@ document.addEventListener("DOMContentLoaded", function () {
   const searchButton = document.querySelector(".search-button");
   const cozy = document.querySelector("#cozy");
   const agenda = document.querySelector("#agenda");
+  const indicator = document.querySelector(".background-indicator");
 
   // 메뉴 호버 기능
   initMenuHover();
 
   // 뷰 토글 (아젠다/코지)
-  initViewToggle();
+  applyViewMode();
+  applyViewModeFromStorage()
 
   // 드롭다운 기능
   initDropdowns();
 
   // 정렬 기능
   initSorting();
+  changeSorting();
+  setSortSelected();
 
   // 검색 기능
   initSearch();
@@ -83,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const boardCode = this.dataset.boardCode;
         let likeCK = Number(this.dataset.likeCheck);
 
-        console.log(loginMemberNo, boardNo, likeCK, `${boardCode}`);
+        // console.log(loginMemberNo, boardNo, likeCK, `${boardCode}`);
 
         if (!loginMemberNo || loginMemberNo === "null") {
           alert("로그인 후 이용해주세요");
@@ -136,33 +140,82 @@ document.addEventListener("DOMContentLoaded", function () {
   /**
    * 뷰 토글 (아젠다/코지) 초기화
    */
-  function initViewToggle() {
-    viewToggles.forEach((toggle) => {
-      toggle.addEventListener("click", function () {
-        // 활성화된 토글 클래스 제거
-        viewToggles.forEach((t) => t.classList.remove("active"));
-
-        // 클릭된 토글 활성화
-        this.classList.add("active");
-
-        // 뷰 모드 변경
-        const viewMode = this.dataset.view;
-        if (recipeContainer) {
-          if (viewMode === "agenda") {
-            cozy.style.display = "none";
-            agenda.style.display = "block";
-
-          } else {
-            agenda.style.display = "none";
-            cozy.style.display = "block";
-          }
-        }
-      });
-    });
+  function saveViewMode(mode) {
+  sessionStorage.setItem("viewMode", mode);
   }
 
+  function getViewMode() {
+    return sessionStorage.getItem("viewMode") || "cozy";
+  }
+
+  function applyViewMode() {
+    const view = getViewMode();
+
+
+    // 모든 버튼에서 active 제거
+    document.querySelectorAll(".view-toggle").forEach((btn) => {
+      btn.classList.remove("active");
+
+      // 현재 뷰모드와 버튼의 data-view가 같으면 active 추가
+      if (btn.dataset.view === view) {
+        btn.classList.add("active");
+      }
+    });
+
+    if (view === "agenda") {
+      cozy.style.display = "none";
+      agenda.style.display = "block";
+    } else {
+      agenda.style.display = "none";
+      cozy.style.display = "block";
+    }
+  }
+
+  // 버튼에 이벤트 연결
+  document.querySelectorAll(".view-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.view;
+      saveViewMode(mode);
+      applyViewMode();
+    });
+  });
+
+  function applyViewModeFromStorage() {
+    const savedView = sessionStorage.getItem("viewMode") || "cozy";
+
+    viewToggles.forEach((btn) => {
+      const view = btn.dataset.view;
+      if (view === savedView) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+
+    // cozy/agenda 영역 전환도 해줘야 해요!
+    if (savedView === "agenda") {
+      agenda.style.display = "block";
+      cozy.style.display = "none";
+    } else {
+      cozy.style.display = "block";
+      agenda.style.display = "none";
+    }
+
+    // indicator 위치도 갱신 (필요하다면!)
+    if (indicator) {
+      if (savedView === "agenda") {
+        indicator.style.left = "0";
+        indicator.style.right = "auto";
+      } else {
+        indicator.style.left = "auto";
+        indicator.style.right = "0";
+      }
+      indicator.style.width = "50%";
+    }
+    
+}
   // 토글 배경 전환 UI 구현 코드
-  const indicator = document.querySelector(".background-indicator");
+  
 
   viewToggles.forEach((btn, index) => {
     btn.addEventListener("click", () => {
@@ -248,31 +301,108 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   }
+  
+  /**
+  * 정렬 기능 초기화
+  */
+ document.addEventListener("DOMContentLoaded", function () {
+   initSorting();
+ });
+
+ function initSorting() {
+   const sortSelect = document.getElementById("sortSelect");
+
+   if (sortSelect) {
+     sortSelect.addEventListener("change", function () {
+       const url = new URL(window.location.href);
+
+       // 정렬 파라미터 설정
+       url.searchParams.set("sort", this.value);
+
+       // 페이지 파라미터 초기화 (선택사항)
+       url.searchParams.set("page", "1");
+
+       window.location.href = url.toString();
+     });
+   }
+ }
+  /**
+   * 정렬 기능 초기화
+   */
+
+
+function initSorting() {
+   const sortSelect = document.getElementById("sortSelect");
+
+   if (sortSelect) {
+     sortSelect.addEventListener("change", function () {
+       const url = new URL(window.location.href);
+
+       // 정렬 파라미터 설정
+       url.searchParams.set("sort", this.value);
+
+       // 페이지 파라미터 초기화 (선택사항)
+       url.searchParams.set("page", "1");
+
+       window.location.href = url.toString();
+     });
+   }
+ }
 
   /**
    * 정렬 기능 초기화
    */
-  document.addEventListener("DOMContentLoaded", function () {
-    initSorting();
-  });
 
-  function initSorting() {
-    const sortSelect = document.getElementById("sortSelect");
 
+  function changeSorting() {
     if (sortSelect) {
       sortSelect.addEventListener("change", function () {
         const url = new URL(window.location.href);
-
-        // 정렬 파라미터 설정
         url.searchParams.set("sort", this.value);
 
         // 페이지 파라미터 초기화 (선택사항)
-        // url.searchParams.set("page", "1");
+        url.searchParams.set("page", "1");
 
         window.location.href = url.toString();
       });
     }
   }
+
+  function setSortSelected() {
+    const url = new URL(window.location.href);
+    const currentSort = url.searchParams.get("sort");
+
+    if (currentSort) {
+      //const sortSelect = document.getElementById("sortSelect");
+      sortSelect.value = currentSort;
+    }
+  }
+
+
+  /**
+   * 정렬 기능 초기화
+   */
+
+  function changeSorting() {
+    if (sortSelect) {
+      sortSelect.addEventListener("change", function () {
+        const url = new URL(window.location.href);
+        url.searchParams.set("sort", this.value);
+        window.location.href = url.toString();
+      });
+    }
+  }
+
+  function setSortSelected() {
+    const url = new URL(window.location.href);
+    const currentSort = url.searchParams.get("sort");
+
+    if (currentSort) {
+      //const sortSelect = document.getElementById("sortSelect");
+      sortSelect.value = currentSort;
+    }
+  }
+
 
   /**
    * 검색 기능 초기화
